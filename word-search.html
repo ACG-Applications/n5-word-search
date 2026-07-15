@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N5 Word Search with Furigana</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #f0ece6;
+            font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 30px 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #2c241c;
+            border-bottom: 3px solid #d4c9b8;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 small {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #7a6f60;
+        }
+
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            background: #f0ebe3;
+            border: 1px solid #ccc2b2;
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #2d2720;
+            cursor: pointer;
+            transition: 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #e6ddd2;
+            transform: scale(0.97);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: #b8a58b;
+            border-color: #9e8a72;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #a9947a;
+        }
+
+        .btn-secondary {
+            background: #d9d0c4;
+            border-color: #bfb4a4;
+        }
+
+        .btn-active {
+            background: #8a7a6a;
+            border-color: #6b5f4e;
+            color: white;
+        }
+
+        .btn-active:hover {
+            background: #7a6a5a;
+        }
+
+        .btn-tts {
+            background: #4a8a6a;
+            border-color: #3a6a4a;
+            color: white;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+        }
+
+        .btn-tts:hover {
+            background: #3a7a5a;
+        }
+
+        .status {
+            background: #ede8e1;
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            color: #3d352b;
+            margin-left: auto;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .puzzle-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .grid-section {
+            flex: 2 1 500px;
+            min-width: 340px;
+            overflow-x: auto;
+        }
+
+        .grid-container {
+            background: #ffffff;
+            padding: 16px 12px;
+            border-radius: 20px;
+            box-shadow: inset 0 0 0 1px #e3dbd0;
+            position: relative;
+            user-select: none;
+        }
+
+        .grid-instructions {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #8a7e6e;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f8f5f0;
+            border-radius: 8px;
+        }
+
+        table.grid {
+            border-collapse: collapse;
+            margin: 0 auto;
+            cursor: pointer;
+            background: #ffffff;
+        }
+
+        .grid td {
+            width: 48px;
+            height: 48px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 22px;
+            font-weight: 450;
+            border: 1px solid #d9d0c2;
+            background: #ffffff;
+            transition: background 0.15s;
+            font-family: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
+            padding: 0;
+            position: relative;
+        }
+
+        .grid td .kanji {
+            display: block;
+            font-size: 20px;
+            line-height: 1.2;
+            color: #000000;
+        }
+
+        .grid td .furigana {
+            display: block;
+            font-size: 9px;
+            color: #8b0000;
+            line-height: 1.1;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .grid td .furigana.hidden {
+            display: none;
+        }
+
+        .grid td .cell-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding: 2px 0;
+        }
+
+        .grid td.highlight {
+            background: #f5e3c4;
+        }
+
+        .grid td.highlight .kanji {
+            color: #000000;
+            font-weight: 700;
+        }
+
+        .grid td.highlight .furigana {
+            color: #8b0000;
+            font-weight: 500;
+        }
+
+        .grid td.found-word {
+            background: #d4e8d4;
+        }
+
+        .grid td.found-word .kanji {
+            color: #000000;
+        }
+
+        .grid td.found-word .furigana {
+            color: #8b0000;
+        }
+
+        .grid td.mark-start {
+            background: #f0d8b0;
+            border-color: #c8a070;
+        }
+
+        .grid td.mark-start .kanji {
+            color: #000000;
+            font-weight: 700;
+        }
+
+        .grid td.mark-start .furigana {
+            color: #8b0000;
+        }
+
+        .grid td.mark-path {
+            background: #f5e8d0;
+        }
+
+        .grid td.mark-path .kanji {
+            color: #000000;
+        }
+
+        .grid td.mark-path .furigana {
+            color: #8b0000;
+        }
+
+        .grid td.error-mark {
+            background: #f8d0d0;
+        }
+
+        .grid td.error-mark .kanji {
+            color: #000000;
+        }
+
+        .grid td.error-mark .furigana {
+            color: #8b0000;
+        }
+
+        .word-list {
+            flex: 1 1 280px;
+            min-width: 200px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 18px 20px 22px;
+            box-shadow: inset 0 0 0 1px #e3dbd0;
+            align-self: flex-start;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .word-list h3 {
+            font-weight: 400;
+            color: #3b352e;
+            border-bottom: 2px dashed #d4c9b8;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .word-list ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .word-list li {
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            color: #000000;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.1s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+            border: 1px solid transparent;
+            background: #ffffff;
+        }
+
+        .word-list li:hover {
+            background: #f5f0eb;
+            border-color: #d4c9b8;
+        }
+
+        .word-list li .word-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .word-list li .word-kanji {
+            font-weight: 500;
+            font-size: 1.05rem;
+            color: #000000;
+        }
+
+        .word-list li .word-reading {
+            font-size: 0.75rem;
+            color: #8b0000;
+            font-weight: 300;
+        }
+
+        .word-list li .word-reading.hidden {
+            display: none;
+        }
+
+        .word-list li .word-meaning {
+            font-size: 0.75rem;
+            color: #6b6256;
+            font-style: italic;
+        }
+
+        .word-list li .word-sentence {
+            font-size: 0.8rem;
+            color: #000000;
+            padding: 6px 8px;
+            background: #ffffff;
+            border-radius: 6px;
+            margin-top: 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border: 1px solid #e8e4e0;
+        }
+
+        .word-list li .word-sentence .jp-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .word-list li .word-sentence .jp-text {
+            color: #000000;
+            line-height: 1.6;
+        }
+
+        .word-list li .word-sentence .jp-text ruby {
+            ruby-align: center;
+        }
+
+        .word-list li .word-sentence .jp-text ruby rt {
+            color: #8b0000;
+            font-size: 0.65rem;
+            font-weight: 300;
+        }
+
+        .word-list li .word-sentence .en-text {
+            color: #6b6256;
+            font-style: italic;
+            font-size: 0.75rem;
+        }
+
+        .word-list li .tts-btn-small {
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .word-list li .tts-btn-small:hover {
+            transform: scale(1.15);
+        }
+
+        .word-list li .tts-btn-word {
+            background: #4a8a6a;
+        }
+
+        .word-list li .tts-btn-word:hover {
+            background: #3a7a5a;
+        }
+
+        .word-list li .tts-btn-sentence {
+            background: #4a6a8a;
+        }
+
+        .word-list li .tts-btn-sentence:hover {
+            background: #3a5a7a;
+        }
+
+        .word-list li.found {
+            opacity: 0.6;
+            text-decoration: line-through 2px #8a7e6e;
+        }
+
+        .word-list li.found .word-kanji {
+            color: #5a7a5a;
+        }
+
+        .word-list li.found .word-reading {
+            color: #5a7a5a;
+        }
+
+        .word-list li.active {
+            background: #f5e3c4;
+            border-radius: 12px;
+            border-color: #d4c9b8;
+        }
+
+        .counter {
+            font-size: 0.85rem;
+            color: #6b6256;
+            padding: 4px 0;
+        }
+
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: #6b6256;
+            justify-content: center;
+            border-top: 1px solid #e5ddd2;
+            padding-top: 18px;
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend .swatch {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1px solid #ccc2b2;
+        }
+
+        .swatch.highlight-swatch {
+            background: #f5e3c4;
+        }
+
+        .swatch.found-swatch {
+            background: #d4e8d4;
+        }
+
+        .swatch.mark-swatch {
+            background: #f0d8b0;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .btn {
+                display: none !important;
+            }
+
+            .top-bar {
+                display: none !important;
+            }
+
+            .grid-instructions {
+                display: none !important;
+            }
+
+            .legend {
+                display: none !important;
+            }
+
+            .puzzle-wrapper {
+                page-break-after: always;
+                display: block !important;
+            }
+
+            .grid-section {
+                flex: 1 1 100%;
+                min-width: 100%;
+                page-break-after: avoid;
+            }
+
+            .grid-container {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                padding: 10px;
+                background: white;
+            }
+
+            .grid td {
+                border: 1px solid #999;
+                background: white !important;
+                width: 42px;
+                height: 42px;
+            }
+
+            .grid td .kanji {
+                color: #000000 !important;
+                font-size: 18px;
+            }
+
+            .grid td .furigana {
+                color: #8b0000 !important;
+                font-size: 8px;
+            }
+
+            .grid td.highlight,
+            .grid td.found-word,
+            .grid td.mark-start,
+            .grid td.mark-path,
+            .grid td.error-mark {
+                background: white !important;
+            }
+
+            .grid td.found-word {
+                border-color: #4a7a4a !important;
+                border-width: 2px !important;
+            }
+
+            .grid td.found-word .kanji {
+                color: #2a6b2a !important;
+            }
+
+            .word-list {
+                flex: 1 1 100%;
+                min-width: 100%;
+                max-height: none;
+                background: white;
+                box-shadow: none;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 20px;
+                page-break-before: always;
+                page-break-after: avoid;
+            }
+
+            .word-list h3 {
+                font-size: 1.4rem;
+                border-bottom: 2px solid #333;
+                padding-bottom: 12px;
+                margin-bottom: 18px;
+            }
+
+            .word-list ul {
+                columns: 2;
+                column-gap: 30px;
+                padding: 0;
+            }
+
+            .word-list li {
+                padding: 8px 12px;
+                border-bottom: 1px solid #eee;
+                break-inside: avoid;
+                cursor: default;
+                background: white !important;
+                border-radius: 0;
+                border: none !important;
+            }
+
+            .word-list li:hover {
+                background: white !important;
+            }
+
+            .word-list li .word-kanji {
+                font-size: 1.1rem;
+                color: #000000 !important;
+            }
+
+            .word-list li .word-reading {
+                color: #8b0000 !important;
+                font-size: 0.8rem;
+            }
+
+            .word-list li .word-meaning {
+                color: #555;
+                font-size: 0.8rem;
+            }
+
+            .word-list li .word-sentence {
+                background: #f5f5f5 !important;
+                font-size: 0.75rem;
+            }
+
+            .word-list li.found {
+                opacity: 0.7;
+                text-decoration: line-through 2px #666;
+            }
+
+            .word-list li.found .word-kanji {
+                color: #4a7a4a !important;
+            }
+
+            .word-list li.active {
+                background: white !important;
+            }
+
+            .word-list li .tts-btn-small {
+                display: none !important;
+            }
+
+            .counter {
+                font-size: 1rem;
+            }
+
+            .print-header {
+                display: block !important;
+                text-align: center;
+                font-size: 1.2rem;
+                font-weight: 500;
+                margin-bottom: 20px;
+                color: #2c241c;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+            }
+
+            .print-footer {
+                display: block !important;
+                text-align: center;
+                font-size: 0.8rem;
+                color: #666;
+                margin-top: 20px;
+                border-top: 1px solid #ddd;
+                padding-top: 10px;
+            }
+        }
+
+        .print-header,
+        .print-footer {
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            .grid td { width: 38px; height: 38px; }
+            .grid td .kanji { font-size: 16px; }
+            .grid td .furigana { font-size: 7px; }
+            .word-list li { font-size: 0.9rem; }
+            .status { font-size: 0.8rem; min-width: 150px; }
+        }
+
+        @media (max-width: 450px) {
+            .grid td { width: 32px; height: 32px; }
+            .grid td .kanji { font-size: 13px; }
+            .grid td .furigana { font-size: 6px; }
+            .btn { font-size: 0.8rem; padding: 8px 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <h1>
+        <span>🔍 N5 Word Search</span>
+        <small>with Furigana · All Directions</small>
+    </h1>
+
+    <div class="top-bar">
+        <button class="btn btn-primary" id="newPuzzleBtn">🔄 New Puzzle</button>
+        <button class="btn" id="printBtn">🖨️ Print</button>
+        <button class="btn btn-secondary" id="furiganaToggleBtn">🔤 Furigana: ON</button>
+        <button class="btn btn-secondary" id="modeToggleBtn">📝 Mode: Words</button>
+        <button class="btn btn-tts" id="stopTtsBtn">⏹️ Stop TTS</button>
+        <span class="status" id="statusMsg">Loading data...</span>
+    </div>
+
+    <div class="print-header">📖 N5 Word Search Puzzle</div>
+
+    <div class="puzzle-wrapper">
+        <div class="grid-section">
+            <div class="grid-container">
+                <div class="grid-instructions">
+                    💡 Click the <strong>first</strong> letter, then click the <strong>last</strong> letter to mark
+                </div>
+                <table class="grid" id="wordGrid"></table>
+            </div>
+        </div>
+
+        <div class="word-list">
+            <h3>
+                <span id="listTitle">📖 Words</span>
+                <span class="counter" id="foundCounter">0 / 0</span>
+            </h3>
+            <ul id="wordList">
+                <li style="color: #999; text-align: center; padding: 20px;">Loading words...</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="print-footer">N5 Japanese Word Search · Find words in all directions</div>
+
+    <div class="legend">
+        <span><span class="swatch highlight-swatch"></span> Highlighted</span>
+        <span><span class="swatch found-swatch"></span> Found</span>
+        <span><span class="swatch mark-swatch"></span> Marking</span>
+        <span>⬆️⬇️↗️↘️ All Directions</span>
+    </div>
+</div>
+
+<!-- ============================================================
+     DATA FILES - Load from js/data/
+     ============================================================ -->
+<script src="js/data/wordDict.js"></script>
+<script src="js/data/sentences.js"></script>
+
+<!-- ============================================================
+     FURIGANA UTILITY - Load from js/utils/
+     ============================================================ -->
+<script src="js/utils/furigana.js"></script>
+
+<script>
+    // ============================================================
+    // TTS (Text-to-Speech) Engine
+    // ============================================================
+    let currentUtterance = null;
+    let isTtsPlaying = false;
+
+    function speakText(text, lang = 'ja-JP', rate = 0.9) {
+        if (currentUtterance) {
+            window.speechSynthesis.cancel();
+            currentUtterance = null;
+            isTtsPlaying = false;
+        }
+
+        if (!text || text.trim() === '') return;
+
+        try {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = rate;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            utterance.onstart = function() {
+                isTtsPlaying = true;
+            };
+
+            utterance.onend = function() {
+                isTtsPlaying = false;
+                currentUtterance = null;
+            };
+
+            utterance.onerror = function(e) {
+                isTtsPlaying = false;
+                currentUtterance = null;
+                console.warn('⚠️ TTS error:', e);
+            };
+
+            currentUtterance = utterance;
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            console.warn('⚠️ TTS not supported:', e);
+            isTtsPlaying = false;
+        }
+    }
+
+    function stopTts() {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        currentUtterance = null;
+        isTtsPlaying = false;
+    }
+
+    // ============================================================
+    // DATA LOADING
+    // ============================================================
+    const statusEl = document.getElementById('statusMsg');
+
+    let wordDictData = {};
+    let sentencesDataArray = [];
+
+    try {
+        if (typeof wordDict !== 'undefined' && wordDict !== null) {
+            wordDictData = wordDict;
+            console.log('✅ wordDict loaded:', Object.keys(wordDictData).length, 'entries');
+        } else if (typeof window.wordDict !== 'undefined' && window.wordDict !== null) {
+            wordDictData = window.wordDict;
+            console.log('✅ window.wordDict loaded:', Object.keys(wordDictData).length, 'entries');
+        } else {
+            console.warn('⚠️ wordDict not found in global scope');
+        }
+    } catch (e) {
+        console.error('❌ Error loading wordDict:', e);
+    }
+
+    try {
+        if (typeof sentencesData !== 'undefined' && sentencesData !== null) {
+            sentencesDataArray = sentencesData;
+            console.log('✅ sentencesData loaded:', sentencesDataArray.length, 'sentences');
+        } else if (typeof window.sentencesData !== 'undefined' && window.sentencesData !== null) {
+            sentencesDataArray = window.sentencesData;
+            console.log('✅ window.sentencesData loaded:', sentencesDataArray.length, 'sentences');
+        } else {
+            console.warn('⚠️ sentencesData not found in global scope');
+        }
+    } catch (e) {
+        console.error('❌ Error loading sentencesData:', e);
+    }
+
+    let hasData = (Object.keys(wordDictData).length > 0 || sentencesDataArray.length > 0);
+
+    // ============================================================
+    // DATA PROCESSING
+    // ============================================================
+    
+    function buildWordPool() {
+        const pool = [];
+        for (const [word, data] of Object.entries(wordDictData)) {
+            if (word.length >= 2 && word.length <= 6) {
+                pool.push({
+                    word: word,
+                    reading: data.reading || word,
+                    meaning: data.meaning || '',
+                    sentence: '',
+                    fullSentence: ''
+                });
+            }
+        }
+        pool.sort((a, b) => b.word.length - a.word.length);
+        return pool;
+    }
+
+    function buildSentencePool() {
+        const pool = [];
+        const usedWords = new Set();
+        
+        for (const sentence of sentencesDataArray) {
+            const originalJp = sentence.jp || '';
+            const cleanJp = originalJp.replace(/[（(][^）)]*[）)]/g, '').trim();
+            const words = cleanJp.split(/[\s,、。]+/);
+            
+            for (const word of words) {
+                const cleanWord = word.replace(/[、。，,、！!？?、]/g, '');
+                if (cleanWord.length >= 2 && cleanWord.length <= 6 && !usedWords.has(cleanWord)) {
+                    if (wordDictData[cleanWord]) {
+                        usedWords.add(cleanWord);
+                        pool.push({
+                            word: cleanWord,
+                            reading: wordDictData[cleanWord].reading || cleanWord,
+                            meaning: wordDictData[cleanWord].meaning || '',
+                            sentence: sentence.translation || '',
+                            fullSentence: originalJp
+                        });
+                    }
+                }
+            }
+        }
+        pool.sort((a, b) => b.word.length - a.word.length);
+        return pool;
+    }
+
+    // ============================================================
+    // PUZZLE ENGINE
+    // ============================================================
+    const GRID_SIZE = 12;
+    const MAX_WORDS = 12;
+    const DIRS = [
+        [0, 1], [1, 0], [0, -1], [-1, 0],
+        [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+
+    let currentGrid = [];
+    let wordPlacements = [];
+    let foundWords = new Set();
+    let selectedWord = null;
+    let activeWordList = [];
+
+    let currentMode = 'words';
+    let showFurigana = true;
+
+    let markingState = null;
+    let firstMark = null;
+    let markCells = new Set();
+    let errorMark = false;
+
+    const gridEl = document.getElementById('wordGrid');
+    const wordListEl = document.getElementById('wordList');
+    const foundCounterEl = document.getElementById('foundCounter');
+    const listTitleEl = document.getElementById('listTitle');
+    const furiganaToggleBtn = document.getElementById('furiganaToggleBtn');
+    const modeToggleBtn = document.getElementById('modeToggleBtn');
+    const stopTtsBtn = document.getElementById('stopTtsBtn');
+
+    let wordPool = buildWordPool();
+    let sentencePool = buildSentencePool();
+
+    console.log('📚 Word pool:', wordPool.length, 'entries');
+    console.log('📖 Sentence pool:', sentencePool.length, 'entries');
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function canPlace(word, row, col, dr, dc, grid) {
+        const n = grid.length;
+        for (let i = 0; i < word.length; i++) {
+            const r = row + i * dr;
+            const c = col + i * dc;
+            if (r < 0 || r >= n || c < 0 || c >= n) return false;
+            if (grid[r][c] !== '' && grid[r][c] !== word[i]) return false;
+        }
+        return true;
+    }
+
+    function placeWord(word, row, col, dr, dc, grid) {
+        for (let i = 0; i < word.length; i++) {
+            const r = row + i * dr;
+            const c = col + i * dc;
+            grid[r][c] = word[i];
+        }
+    }
+
+    function getCurrentPool() {
+        if (currentMode === 'sentences') {
+            return sentencePool;
+        }
+        return wordPool;
+    }
+
+    function generatePuzzle() {
+        const pool = getCurrentPool();
+        if (pool.length === 0) {
+            statusEl.textContent = '⚠️ No data available. Please check your data files.';
+            return;
+        }
+
+        const shuffledPool = shuffle([...pool]);
+        const selected = [];
+        for (const entry of shuffledPool) {
+            if (selected.length >= MAX_WORDS) break;
+            if (entry.word.length >= 2 && entry.word.length <= 6) {
+                if (!selected.some(e => e.word === entry.word)) {
+                    selected.push(entry);
+                }
+            }
+        }
+
+        while (selected.length < 6 && pool.length > 0) {
+            const fallback = pool[Math.floor(Math.random() * pool.length)];
+            if (!selected.some(e => e.word === fallback.word) && fallback.word.length >= 2) {
+                selected.push(fallback);
+            }
+        }
+
+        activeWordList = selected;
+        const n = GRID_SIZE;
+        const newGrid = Array.from({ length: n }, () => Array(n).fill(''));
+        const placements = [];
+
+        for (const entry of selected) {
+            const word = entry.word;
+            let placed = false;
+            for (let attempt = 0; attempt < 300; attempt++) {
+                const dir = DIRS[Math.floor(Math.random() * DIRS.length)];
+                const dr = dir[0], dc = dir[1];
+                const maxRow = n - (dr === 1 ? word.length : (dr === -1 ? word.length : 0));
+                const maxCol = n - (dc === 1 ? word.length : (dc === -1 ? word.length : 0));
+                if (maxRow <= 0 || maxCol <= 0) continue;
+                const row = Math.floor(Math.random() * maxRow);
+                const col = Math.floor(Math.random() * maxCol);
+
+                let startRow = row, startCol = col;
+                if (dr === -1) startRow = row + word.length - 1;
+                if (dc === -1) startCol = col + word.length - 1;
+                if (startRow < 0 || startRow >= n || startCol < 0 || startCol >= n) continue;
+
+                const r = (dr === -1) ? startRow : row;
+                const c = (dc === -1) ? startCol : col;
+
+                if (canPlace(word, r, c, dr, dc, newGrid)) {
+                    placeWord(word, r, c, dr, dc, newGrid);
+                    placements.push({ word, row: r, col: c, dr, dc, entry });
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                console.warn('Could not place:', word);
+            }
+        }
+
+        const placedWords = new Set(placements.map(p => p.word));
+        activeWordList = activeWordList.filter(e => placedWords.has(e.word));
+
+        const hiragana = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
+        for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+                if (newGrid[r][c] === '') {
+                    newGrid[r][c] = hiragana[Math.floor(Math.random() * hiragana.length)];
+                }
+            }
+        }
+
+        currentGrid = newGrid;
+        wordPlacements = placements;
+        foundWords = new Set();
+        selectedWord = null;
+        markingState = null;
+        firstMark = null;
+        markCells = new Set();
+        errorMark = false;
+        renderAll();
+        statusEl.textContent = 'Click the first letter, then click the last letter to mark';
+    }
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+    function getCellKey(row, col) {
+        return `${row},${col}`;
+    }
+
+    function getFuriganaForChar(ch) {
+        for (const entry of activeWordList) {
+            const idx = entry.word.indexOf(ch);
+            if (idx !== -1) {
+                const readingChars = entry.reading.split('');
+                if (readingChars[idx]) return readingChars[idx];
+            }
+        }
+        if (wordDictData[ch]) {
+            return wordDictData[ch].reading || '';
+        }
+        return '';
+    }
+
+    function renderGrid() {
+        const n = currentGrid.length;
+        if (n === 0 || !currentGrid[0]) {
+            gridEl.innerHTML = '<tr><td colspan="12" style="padding: 40px; text-align: center; color: #999;">No grid data</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        for (let r = 0; r < n; r++) {
+            html += '<tr>';
+            for (let c = 0; c < n; c++) {
+                const ch = currentGrid[r][c] || '　';
+                let cls = '';
+                const cellKey = getCellKey(r, c);
+
+                if (markCells.has(cellKey)) {
+                    if (firstMark && r === firstMark.row && c === firstMark.col) {
+                        cls = 'mark-start';
+                    } else if (firstMark && markingState === 'second') {
+                        cls = 'mark-path';
+                    }
+                }
+
+                if (!markingState && selectedWord && !markCells.size) {
+                    const placement = wordPlacements.find(p => p.word === selectedWord);
+                    if (placement) {
+                        const { row, col, dr, dc } = placement;
+                        for (let i = 0; i < selectedWord.length; i++) {
+                            const cr = row + i * dr;
+                            const cc = col + i * dc;
+                            if (cr === r && cc === c) {
+                                cls = 'highlight';
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!markCells.has(cellKey)) {
+                    for (const foundWord of foundWords) {
+                        const placement = wordPlacements.find(p => p.word === foundWord);
+                        if (placement) {
+                            const { row, col, dr, dc } = placement;
+                            for (let i = 0; i < foundWord.length; i++) {
+                                const cr = row + i * dr;
+                                const cc = col + i * dc;
+                                if (cr === r && cc === c) {
+                                    if (cls !== 'highlight' && cls !== 'mark-start' && cls !== 'mark-path') {
+                                        cls = 'found-word';
+                                    }
+                                    break;
+                                }
+                            }
+                            if (cls === 'found-word') break;
+                        }
+                    }
+                }
+
+                if (errorMark && markCells.has(cellKey)) {
+                    cls = 'error-mark';
+                }
+
+                const furigana = getFuriganaForChar(ch);
+                const furiganaClass = showFurigana ? '' : 'hidden';
+
+                html += `<td class="${cls}" data-row="${r}" data-col="${c}">
+                    <div class="cell-content">
+                        <span class="furigana ${furiganaClass}">${furigana || ''}</span>
+                        <span class="kanji">${ch}</span>
+                    </div>
+                </td>`;
+            }
+            html += '</tr>';
+        }
+        gridEl.innerHTML = html;
+    }
+
+    // ============================================================
+    // FURIGANA - Use buildRubyHTML from furigana.js
+    // ============================================================
+    function getSentenceWithFurigana(sentence) {
+        if (!sentence) return sentence;
+        
+        // Try to use buildRubyHTML from furigana.js
+        if (typeof window.buildRubyHTML === 'function') {
+            return window.buildRubyHTML(sentence);
+        }
+        if (typeof buildRubyHTML === 'function') {
+            return buildRubyHTML(sentence);
+        }
+        
+        // Fallback: simple ruby conversion
+        return sentence.replace(
+            /([\u4e00-\u9faf\u3400-\u4dbf]+)（([^（）]+)）/g,
+            (_, kanji, furigana) => `<ruby>${kanji}<rt>${furigana}</rt></ruby>`
+        );
+    }
+
+    function renderWordList() {
+        if (activeWordList.length === 0) {
+            wordListEl.innerHTML = '<li style="color: #999; text-align: center; padding: 20px;">No words available</li>';
+            return;
+        }
+        
+        let html = '';
+        for (const entry of activeWordList) {
+            const found = foundWords.has(entry.word);
+            const active = selectedWord === entry.word;
+            
+            const originalSentence = entry.fullSentence || '';
+            
+            // Clean version (remove all furigana markers)
+            const cleanSentence = originalSentence.replace(/[（(][^）)]*[）)]/g, '').trim();
+            
+            // When furigana is OFF, show the clean version (no parentheses)
+            // When furigana is ON, show the version with ruby tags
+            let displaySentence;
+            if (showFurigana) {
+                // ON: Show with ruby tags (furigana above kanji)
+                displaySentence = getSentenceWithFurigana(originalSentence);
+            } else {
+                // OFF: Show clean version without any furigana markers
+                displaySentence = cleanSentence;
+            }
+            
+            // Build sentence display
+            let sentenceHtml = '';
+            if (originalSentence) {
+                sentenceHtml = `
+                    <div class="word-sentence">
+                        <div class="jp-line">
+                            <span class="jp-text">${displaySentence}</span>
+                            <button class="tts-btn-small tts-btn-sentence" data-tts="${cleanSentence}" data-lang="ja-JP" title="🔊 Listen to sentence">🔊</button>
+                        </div>
+                        <div class="en-text">${entry.sentence || ''}</div>
+                    </div>
+                `;
+            }
+            
+            const readingClass = showFurigana ? '' : 'hidden';
+            
+            html += `<li class="${found ? 'found' : ''} ${active ? 'active' : ''}" 
+                         data-word="${entry.word}">
+                <div class="word-main">
+                    <span class="word-kanji">${entry.word}</span>
+                    <span class="word-reading ${readingClass}">${entry.reading}</span>
+                    <span class="word-meaning">${entry.meaning}</span>
+                    <button class="tts-btn-small tts-btn-word" data-tts="${entry.word}" data-lang="ja-JP" title="🔊 Listen to word">🔊</button>
+                </div>
+                ${sentenceHtml}
+            </li>`;
+        }
+        wordListEl.innerHTML = html;
+
+        // TTS for buttons
+        document.querySelectorAll('.tts-btn-small').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const text = this.dataset.tts;
+                const lang = this.dataset.lang || 'ja-JP';
+                if (text) {
+                    speakText(text, lang);
+                }
+            });
+        });
+
+        // Click: highlight
+        document.querySelectorAll('#wordList li').forEach(li => {
+            li.addEventListener('click', function(e) {
+                if (e.target.closest('.tts-btn-small')) return;
+                
+                const word = this.dataset.word;
+                if (foundWords.has(word)) {
+                    selectedWord = word;
+                    markingState = null;
+                    firstMark = null;
+                    markCells = new Set();
+                    errorMark = false;
+                    renderGrid();
+                    renderWordList();
+                    statusEl.textContent = `✅ "${word}" already found`;
+                } else {
+                    selectedWord = word;
+                    markingState = null;
+                    firstMark = null;
+                    markCells = new Set();
+                    errorMark = false;
+                    renderGrid();
+                    renderWordList();
+                    statusEl.textContent = `🔎 Looking for "${word}"...`;
+                }
+            });
+
+            // Double-click: mark as found
+            li.addEventListener('dblclick', function(e) {
+                const word = this.dataset.word;
+                const placement = wordPlacements.find(p => p.word === word);
+                if (!placement) {
+                    statusEl.textContent = `⚠️ "${word}" not placed in grid`;
+                    return;
+                }
+                if (foundWords.has(word)) {
+                    statusEl.textContent = `"${word}" already found`;
+                    return;
+                }
+                foundWords.add(word);
+                selectedWord = word;
+                markingState = null;
+                firstMark = null;
+                markCells = new Set();
+                errorMark = false;
+                renderGrid();
+                renderWordList();
+                updateCounter();
+                statusEl.textContent = `🎉 Found "${word}"!`;
+                speakText(word, 'ja-JP');
+                if (foundWords.size === activeWordList.length) {
+                    statusEl.textContent = '🎊 Congratulations! All words found!';
+                }
+            });
+        });
+    }
+
+    function updateCounter() {
+        foundCounterEl.textContent = `${foundWords.size} / ${activeWordList.length}`;
+        listTitleEl.textContent = currentMode === 'sentences' ? '📖 Sentences' : '📖 Words';
+    }
+
+    function renderAll() {
+        renderGrid();
+        renderWordList();
+        updateCounter();
+    }
+
+    // ============================================================
+    // GRID MARKING LOGIC
+    // ============================================================
+    function getCellFromEvent(e) {
+        const td = e.target.closest('td');
+        if (!td) return null;
+        const row = parseInt(td.dataset.row);
+        const col = parseInt(td.dataset.col);
+        if (isNaN(row) || isNaN(col)) return null;
+        return { row, col };
+    }
+
+    function getPathCells(start, end) {
+        if (!start || !end) return [];
+
+        const dr = Math.sign(end.row - start.row);
+        const dc = Math.sign(end.col - start.col);
+
+        if (dr !== 0 && dc !== 0 && Math.abs(end.row - start.row) !== Math.abs(end.col - start.col)) {
+            return null;
+        }
+
+        const cells = [];
+        let row = start.row, col = start.col;
+        const endRow = end.row, endCol = end.col;
+
+        while (row !== endRow + dr || col !== endCol + dc) {
+            cells.push({ row, col });
+            row += dr;
+            col += dc;
+        }
+
+        return cells;
+    }
+
+    function getWordFromCells(cells) {
+        if (!cells || cells.length < 2) return null;
+
+        const wordChars = cells.map(cell => currentGrid[cell.row][cell.col]).join('');
+
+        for (const entry of activeWordList) {
+            const target = entry.word;
+            if (wordChars === target) {
+                return entry;
+            }
+            const reversed = wordChars.split('').reverse().join('');
+            if (reversed === target) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    if (gridEl) {
+        gridEl.addEventListener('click', function(e) {
+            const cell = getCellFromEvent(e);
+            if (!cell) return;
+
+            const cellKey = getCellKey(cell.row, cell.col);
+            let cellFound = false;
+            for (const foundWord of foundWords) {
+                const placement = wordPlacements.find(p => p.word === foundWord);
+                if (placement) {
+                    const { row, col, dr, dc } = placement;
+                    for (let i = 0; i < foundWord.length; i++) {
+                        const cr = row + i * dr;
+                        const cc = col + i * dc;
+                        if (cr === cell.row && cc === cell.col) {
+                            cellFound = true;
+                            break;
+                        }
+                    }
+                    if (cellFound) break;
+                }
+            }
+            if (cellFound) {
+                statusEl.textContent = 'This letter is already part of a found word';
+                return;
+            }
+
+            if (markingState === null || markingState === 'first') {
+                markingState = 'second';
+                firstMark = cell;
+                markCells = new Set([getCellKey(cell.row, cell.col)]);
+                errorMark = false;
+                renderGrid();
+                statusEl.textContent = `📍 Start: (${cell.row+1}, ${cell.col+1}) - Click the last letter`;
+            } else if (markingState === 'second') {
+                const path = getPathCells(firstMark, cell);
+                if (!path) {
+                    errorMark = true;
+                    markCells = new Set();
+                    markCells.add(getCellKey(firstMark.row, firstMark.col));
+                    markCells.add(getCellKey(cell.row, cell.col));
+                    renderGrid();
+                    statusEl.textContent = '❌ Must be straight line (horizontal, vertical, or diagonal)';
+                    setTimeout(() => {
+                        errorMark = false;
+                        markCells = new Set();
+                        markingState = null;
+                        firstMark = null;
+                        renderGrid();
+                        statusEl.textContent = 'Click the first letter, then click the last letter';
+                    }, 1500);
+                    return;
+                }
+
+                const foundEntry = getWordFromCells(path);
+                if (foundEntry) {
+                    if (foundWords.has(foundEntry.word)) {
+                        statusEl.textContent = `"${foundEntry.word}" already found`;
+                        markCells = new Set();
+                        markingState = null;
+                        firstMark = null;
+                        renderGrid();
+                        return;
+                    }
+
+                    foundWords.add(foundEntry.word);
+                    selectedWord = foundEntry.word;
+                    markCells = new Set();
+                    markingState = null;
+                    firstMark = null;
+                    errorMark = false;
+                    renderAll();
+                    statusEl.textContent = `🎉 Found "${foundEntry.word}"!`;
+                    speakText(foundEntry.word, 'ja-JP');
+                    if (foundWords.size === activeWordList.length) {
+                        statusEl.textContent = '🎊 Congratulations! All words found!';
+                    }
+                } else {
+                    errorMark = true;
+                    for (const p of path) {
+                        markCells.add(getCellKey(p.row, p.col));
+                    }
+                    renderGrid();
+                    statusEl.textContent = '❌ Not a valid word in the list';
+                    setTimeout(() => {
+                        errorMark = false;
+                        markCells = new Set();
+                        markingState = null;
+                        firstMark = null;
+                        renderGrid();
+                        statusEl.textContent = 'Click the first letter, then click the last letter';
+                    }, 1500);
+                }
+            }
+        });
+    }
+
+    // ============================================================
+    // TOGGLES
+    // ============================================================
+    if (furiganaToggleBtn) {
+        furiganaToggleBtn.addEventListener('click', function() {
+            showFurigana = !showFurigana;
+            this.textContent = showFurigana ? '🔤 Furigana: ON' : '🔤 Furigana: OFF';
+            this.classList.toggle('btn-active', !showFurigana);
+            renderGrid();
+            renderWordList();
+        });
+    }
+
+    if (modeToggleBtn) {
+        modeToggleBtn.addEventListener('click', function() {
+            currentMode = currentMode === 'words' ? 'sentences' : 'words';
+            this.textContent = currentMode === 'sentences' ? '📝 Mode: Sentences' : '📝 Mode: Words';
+            this.classList.toggle('btn-active', currentMode === 'sentences');
+            
+            if (currentMode === 'sentences' && sentencePool.length === 0) {
+                sentencePool = buildSentencePool();
+                console.log('📖 Sentence pool built:', sentencePool.length, 'entries');
+            }
+            if (currentMode === 'words' && wordPool.length === 0) {
+                wordPool = buildWordPool();
+                console.log('📚 Word pool built:', wordPool.length, 'entries');
+            }
+            
+            generatePuzzle();
+            statusEl.textContent = currentMode === 'sentences' ? '📖 Searching sentences mode' : '📖 Searching words mode';
+        });
+    }
+
+    if (stopTtsBtn) {
+        stopTtsBtn.addEventListener('click', function() {
+            stopTts();
+            statusEl.textContent = '⏹️ TTS stopped';
+            setTimeout(() => {
+                statusEl.textContent = 'Click the first letter, then click the last letter to mark';
+            }, 1500);
+        });
+    }
+
+    // ============================================================
+    // CONTROLS
+    // ============================================================
+    document.getElementById('newPuzzleBtn').addEventListener('click', function() {
+        generatePuzzle();
+    });
+
+    document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    if (hasData) {
+        generatePuzzle();
+        statusEl.textContent = 'Click the first letter, then click the last letter to mark';
+    } else {
+        gridEl.innerHTML = '<tr><td colspan="12" style="padding: 40px; text-align: center; color: #a02020;">⚠️ No data loaded. Check that files exist at:<br>js/data/wordDict.js<br>js/data/sentences.js</td></tr>';
+        wordListEl.innerHTML = '<li style="color: #a02020; text-align: center; padding: 20px;">⚠️ No data loaded</li>';
+    }
+</script>
+</body>
+</html>
