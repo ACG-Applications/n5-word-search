@@ -1,0 +1,44 @@
+{
+  "name": "N5 Word Search with Furigana",
+  "short_name": "N5 Word Search",
+  "description": "Japanese N5 level word search puzzle with furigana and TTS support",
+  "start_url": "word-search.html",
+  "display": "standalone",
+  "background_color": "#f0ece6",
+  "theme_color": "#b8a58b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Puzzle",
+      "url": "word-search.html",
+      "description": "Start a new word search puzzle"
+    }
+  ],
+  "categories": ["education", "games"],
+  "lang": "en",
+  "dir": "ltr"
+}

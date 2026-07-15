@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N5 Word Search with Furigana</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#b8a58b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -115,6 +123,21 @@
 
         .btn-tts:hover {
             background: #3a7a5a;
+        }
+
+        .btn-install {
+            background: #6a4a8a;
+            border-color: #5a3a7a;
+            color: white;
+            display: none;
+        }
+
+        .btn-install:hover {
+            background: #5a3a7a;
+        }
+
+        .btn-install.visible {
+            display: inline-block;
         }
 
         .status {
@@ -715,6 +738,7 @@
         <button class="btn btn-secondary" id="furiganaToggleBtn">🔤 Furigana: ON</button>
         <button class="btn btn-secondary" id="modeToggleBtn">📝 Mode: Words</button>
         <button class="btn btn-tts" id="stopTtsBtn">⏹️ Stop TTS</button>
+        <button class="btn btn-install" id="installBtn">📲 Install App</button>
         <span class="status" id="statusMsg">Loading data...</span>
     </div>
 
@@ -761,6 +785,60 @@
      FURIGANA UTILITY - Load from js/utils/
      ============================================================ -->
 <script src="js/utils/furigana.js"></script>
+
+<!-- ============================================================
+     PWA REGISTRATION
+     ============================================================ -->
+<script>
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered successfully:', registration);
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+        });
+    });
+  }
+
+  // Check for app install prompt
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log('App install prompt available');
+    
+    // Show install button
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) {
+      installBtn.classList.add('visible');
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    console.log('App installed successfully');
+    deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) {
+      installBtn.classList.remove('visible');
+    }
+  });
+
+  // Install button click handler
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      console.log('User choice:', result.outcome);
+      if (result.outcome === 'accepted') {
+        document.getElementById('installBtn').classList.remove('visible');
+      }
+      deferredPrompt = null;
+    }
+  });
+</script>
 
 <script>
     // ============================================================
@@ -1530,6 +1608,13 @@
     } else {
         gridEl.innerHTML = '<tr><td colspan="12" style="padding: 40px; text-align: center; color: #a02020;">⚠️ No data loaded. Check that files exist at:<br>js/data/wordDict.js<br>js/data/sentences.js</td></tr>';
         wordListEl.innerHTML = '<li style="color: #a02020; text-align: center; padding: 20px;">⚠️ No data loaded</li>';
+    }
+
+    // Check if service worker registration is complete and ready
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(() => {
+            console.log('Service Worker is ready');
+        });
     }
 </script>
 </body>
