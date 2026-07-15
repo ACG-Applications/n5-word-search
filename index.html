@@ -1020,6 +1020,98 @@
     console.log('📚 Word pool:', wordPool.length, 'entries');
     console.log('📖 Sentence pool:', sentencePool.length, 'entries');
 
+    // ============================================================
+    // FIXED: Proper furigana mapping - handles multiple reading chars per kanji
+    // ============================================================
+
+    // Build a dictionary mapping cell positions to furigana for each word placement
+    const furiganaMap = new Map();
+
+    function getCellKey(row, col) {
+        return `${row},${col}`;
+    }
+
+    function buildFuriganaMap() {
+        furiganaMap.clear();
+        
+        for (const placement of wordPlacements) {
+            const { word, entry, row, col, dr, dc } = placement;
+            const reading = entry.reading || word;
+            
+            // Get the kanji characters in this word
+            const kanjiChars = word.split('');
+            const readingChars = reading.split('');
+            
+            const kanjiCount = kanjiChars.length;
+            const readingCount = readingChars.length;
+            const furiganaForKanji = [];
+            
+            if (kanjiCount === readingCount) {
+                // 1:1 mapping
+                for (let i = 0; i < kanjiCount; i++) {
+                    furiganaForKanji.push(readingChars[i] || '');
+                }
+            } else if (kanjiCount === 1) {
+                // Single kanji, all reading chars go to it
+                furiganaForKanji.push(reading);
+            } else {
+                // More complex: distribute reading chars across kanji
+                let remainingChars = readingCount - kanjiCount;
+                
+                // Give 1 base char to each kanji, distribute extras
+                let idx = 0;
+                for (let i = 0; i < kanjiCount; i++) {
+                    let charCount = 1;
+                    if (i === kanjiCount - 1) {
+                        // Last kanji gets all remaining chars
+                        charCount = 1 + remainingChars;
+                    } else if (remainingChars > 0) {
+                        // Give extras to earlier kanji too
+                        charCount = 1 + Math.floor(remainingChars / (kanjiCount - i));
+                        remainingChars -= (charCount - 1);
+                    }
+                    
+                    const furiganaSegment = readingChars.slice(idx, idx + charCount).join('');
+                    furiganaForKanji.push(furiganaSegment);
+                    idx += charCount;
+                }
+            }
+            
+            // Store the mapping for each grid cell
+            for (let i = 0; i < word.length; i++) {
+                const r = row + i * dr;
+                const c = col + i * dc;
+                const key = getCellKey(r, c);
+                const furigana = furiganaForKanji[i] || '';
+                furiganaMap.set(key, furigana);
+            }
+        }
+    }
+
+    function getFuriganaForChar(row, col) {
+        const key = getCellKey(row, col);
+        // Check furigana map first
+        if (furiganaMap.has(key)) {
+            return furiganaMap.get(key);
+        }
+        
+        // Fallback: try to find from word placements
+        const ch = currentGrid[row][col];
+        for (const entry of activeWordList) {
+            const idx = entry.word.indexOf(ch);
+            if (idx !== -1) {
+                const readingChars = entry.reading.split('');
+                if (readingChars[idx]) {
+                    return readingChars[idx];
+                }
+            }
+        }
+        if (wordDictData[ch]) {
+            return wordDictData[ch].reading || '';
+        }
+        return '';
+    }
+
     function shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -1130,6 +1222,7 @@
 
         currentGrid = newGrid;
         wordPlacements = placements;
+        buildFuriganaMap(); // Build furigana mapping for the new puzzle
         foundWords = new Set();
         selectedWord = null;
         markingState = null;
@@ -1143,21 +1236,8 @@
     // ============================================================
     // RENDER
     // ============================================================
-    function getCellKey(row, col) {
-        return `${row},${col}`;
-    }
-
-    function getFuriganaForChar(ch) {
-        for (const entry of activeWordList) {
-            const idx = entry.word.indexOf(ch);
-            if (idx !== -1) {
-                const readingChars = entry.reading.split('');
-                if (readingChars[idx]) return readingChars[idx];
-            }
-        }
-        if (wordDictData[ch]) {
-            return wordDictData[ch].reading || '';
-        }
+    function getFuriganaForCharOld(ch) {
+        // This is kept for compatibility but no longer used
         return '';
     }
 
@@ -1223,7 +1303,7 @@
                     cls = 'error-mark';
                 }
 
-                const furigana = getFuriganaForChar(ch);
+                const furigana = getFuriganaForChar(r, c);
                 const furiganaClass = showFurigana ? '' : 'hidden';
 
                 html += `<td class="${cls}" data-row="${r}" data-col="${c}">
