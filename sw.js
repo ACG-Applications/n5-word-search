@@ -1,12 +1,12 @@
 // Service Worker for N5 Word Search PWA
-const CACHE_NAME = 'n5-word-search-v1';
+const CACHE_NAME = 'n5-word-search-v2'; // Changed version to force update
 const ASSETS_TO_CACHE = [
   './',
-  './word-search.html',
+  './index.html',
+  './manifest.json',
   './js/data/wordDict.js',
   './js/data/sentences.js',
   './js/utils/furigana.js',
-  './manifest.json',
   './icons/favicon-16x16.png',
   './icons/favicon-32x32.png',
   './icons/icon-192x192.png',
@@ -98,7 +98,7 @@ self.addEventListener('fetch', (event) => {
             console.error('Service Worker: Fetch error', error);
             // Return offline fallback for HTML pages
             if (event.request.headers.get('accept').includes('text/html')) {
-              return caches.match('./word-search.html');
+              return caches.match('./index.html');
             }
             return new Response('Offline', { status: 503 });
           });
@@ -123,6 +123,6 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('./word-search.html')
+    clients.openWindow('https://acg-applications.github.io/n5-word-search/index.html')
   );
 });

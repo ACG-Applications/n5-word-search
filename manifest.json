@@ -2,7 +2,7 @@
   "name": "N5 Word Search with Furigana",
   "short_name": "N5 Word Search",
   "description": "Japanese N5 level word search puzzle with furigana and TTS support",
-  "start_url": "word-search.html",
+  "start_url": "https://acg-applications.github.io/n5-word-search/index.html",
   "display": "standalone",
   "background_color": "#f0ece6",
   "theme_color": "#b8a58b",
@@ -34,7 +34,7 @@
   "shortcuts": [
     {
       "name": "New Puzzle",
-      "url": "word-search.html",
+      "url": "https://acg-applications.github.io/n5-word-search/index.html",
       "description": "Start a new word search puzzle"
     }
   ],
