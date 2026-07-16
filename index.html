@@ -748,7 +748,8 @@
         <div class="grid-section">
             <div class="grid-container">
                 <div class="grid-instructions">
-                    💡 Click the <strong>first</strong> letter, then click the <strong>last</strong> letter to mark
+                    💡 Click the <strong>first</strong> letter, then click the <strong>last</strong> letter to mark<br>
+                    <span style="font-size:0.75rem; color:#8a7e6e;">(or click adjacent cells one by one, then click the first to finish)</span>
                 </div>
                 <table class="grid" id="wordGrid"></table>
             </div>
@@ -1001,8 +1002,10 @@
     let currentMode = 'words';
     let showFurigana = true;
 
-    let markingState = null;
+    // Marking state for both methods
+    let markingState = null; // 'first', 'second', 'building'
     let firstMark = null;
+    let selectedCells = []; // For step-by-step method
     let markCells = new Set();
     let errorMark = false;
 
@@ -1021,10 +1024,9 @@
     console.log('📖 Sentence pool:', sentencePool.length, 'entries');
 
     // ============================================================
-    // FIXED: Proper furigana mapping - handles multiple reading chars per kanji
+    // FURIGANA MAPPING
     // ============================================================
 
-    // Build a dictionary mapping cell positions to furigana for each word placement
     const furiganaMap = new Map();
 
     function getCellKey(row, col) {
@@ -1038,64 +1040,83 @@
             const { word, entry, row, col, dr, dc } = placement;
             const reading = entry.reading || word;
             
-            // Get the kanji characters in this word
-            const kanjiChars = word.split('');
+            const chars = word.split('');
             const readingChars = reading.split('');
             
-            const kanjiCount = kanjiChars.length;
-            const readingCount = readingChars.length;
-            const furiganaForKanji = [];
-            
-            if (kanjiCount === readingCount) {
-                // 1:1 mapping
-                for (let i = 0; i < kanjiCount; i++) {
-                    furiganaForKanji.push(readingChars[i] || '');
-                }
-            } else if (kanjiCount === 1) {
-                // Single kanji, all reading chars go to it
-                furiganaForKanji.push(reading);
-            } else {
-                // More complex: distribute reading chars across kanji
-                let remainingChars = readingCount - kanjiCount;
-                
-                // Give 1 base char to each kanji, distribute extras
-                let idx = 0;
-                for (let i = 0; i < kanjiCount; i++) {
-                    let charCount = 1;
-                    if (i === kanjiCount - 1) {
-                        // Last kanji gets all remaining chars
-                        charCount = 1 + remainingChars;
-                    } else if (remainingChars > 0) {
-                        // Give extras to earlier kanji too
-                        charCount = 1 + Math.floor(remainingChars / (kanjiCount - i));
-                        remainingChars -= (charCount - 1);
-                    }
-                    
-                    const furiganaSegment = readingChars.slice(idx, idx + charCount).join('');
-                    furiganaForKanji.push(furiganaSegment);
-                    idx += charCount;
+            const kanjiPositions = [];
+            for (let i = 0; i < chars.length; i++) {
+                const ch = chars[i];
+                if (ch >= '\u4e00' && ch <= '\u9faf') {
+                    kanjiPositions.push(i);
                 }
             }
             
-            // Store the mapping for each grid cell
-            for (let i = 0; i < word.length; i++) {
-                const r = row + i * dr;
-                const c = col + i * dc;
-                const key = getCellKey(r, c);
-                const furigana = furiganaForKanji[i] || '';
-                furiganaMap.set(key, furigana);
+            if (kanjiPositions.length === 0) continue;
+            
+            let okuriganaLength = 0;
+            let foundKanji = false;
+            for (let i = chars.length - 1; i >= 0; i--) {
+                const ch = chars[i];
+                const isKanji = ch >= '\u4e00' && ch <= '\u9faf';
+                if (!isKanji && !foundKanji) {
+                    okuriganaLength++;
+                } else if (isKanji) {
+                    foundKanji = true;
+                }
+            }
+            
+            let readingIdx = 0;
+            const totalReading = readingChars.length;
+            
+            if (kanjiPositions.length === 1) {
+                const pos = kanjiPositions[0];
+                let kanjiReading = reading;
+                if (okuriganaLength > 0 && reading.length > okuriganaLength) {
+                    kanjiReading = reading.slice(0, reading.length - okuriganaLength);
+                }
+                const cellKey = getCellKey(row + pos * dr, col + pos * dc);
+                furiganaMap.set(cellKey, kanjiReading);
+            } else {
+                for (let k = 0; k < kanjiPositions.length; k++) {
+                    const pos = kanjiPositions[k];
+                    const isLast = (k === kanjiPositions.length - 1);
+                    
+                    let charsForThisKanji;
+                    if (isLast) {
+                        charsForThisKanji = totalReading - readingIdx;
+                    } else {
+                        const remainingKanji = kanjiPositions.length - k;
+                        const remainingReading = totalReading - readingIdx;
+                        charsForThisKanji = Math.floor(remainingReading / remainingKanji);
+                        if (charsForThisKanji < 1) charsForThisKanji = 1;
+                    }
+                    
+                    let furiganaText = '';
+                    for (let j = 0; j < charsForThisKanji && readingIdx < totalReading; j++) {
+                        furiganaText += readingChars[readingIdx++];
+                    }
+                    
+                    const cellKey = getCellKey(row + pos * dr, col + pos * dc);
+                    furiganaMap.set(cellKey, furiganaText);
+                }
+            }
+            
+            for (let i = 0; i < chars.length; i++) {
+                const ch = chars[i];
+                const isKanji = ch >= '\u4e00' && ch <= '\u9faf';
+                if (!isKanji) {
+                    const cellKey = getCellKey(row + i * dr, col + i * dc);
+                    furiganaMap.set(cellKey, '');
+                }
             }
         }
     }
 
     function getFuriganaForChar(row, col) {
         const key = getCellKey(row, col);
-        // Check furigana map first
         if (furiganaMap.has(key)) {
             return furiganaMap.get(key);
         }
-        
-        // Fallback: try to find from word placements
         const ch = currentGrid[row][col];
         for (const entry of activeWordList) {
             const idx = entry.word.indexOf(ch);
@@ -1222,25 +1243,21 @@
 
         currentGrid = newGrid;
         wordPlacements = placements;
-        buildFuriganaMap(); // Build furigana mapping for the new puzzle
+        buildFuriganaMap();
         foundWords = new Set();
         selectedWord = null;
         markingState = null;
         firstMark = null;
+        selectedCells = [];
         markCells = new Set();
         errorMark = false;
         renderAll();
-        statusEl.textContent = 'Click the first letter, then click the last letter to mark';
+        statusEl.textContent = 'Click first letter, then last letter (or click cells one by one)';
     }
 
     // ============================================================
     // RENDER
     // ============================================================
-    function getFuriganaForCharOld(ch) {
-        // This is kept for compatibility but no longer used
-        return '';
-    }
-
     function renderGrid() {
         const n = currentGrid.length;
         if (n === 0 || !currentGrid[0]) {
@@ -1259,7 +1276,7 @@
                 if (markCells.has(cellKey)) {
                     if (firstMark && r === firstMark.row && c === firstMark.col) {
                         cls = 'mark-start';
-                    } else if (firstMark && markingState === 'second') {
+                    } else if (markingState === 'second' || markingState === 'building') {
                         cls = 'mark-path';
                     }
                 }
@@ -1324,7 +1341,6 @@
     function getSentenceWithFurigana(sentence) {
         if (!sentence) return sentence;
         
-        // Try to use buildRubyHTML from furigana.js
         if (typeof window.buildRubyHTML === 'function') {
             return window.buildRubyHTML(sentence);
         }
@@ -1332,7 +1348,6 @@
             return buildRubyHTML(sentence);
         }
         
-        // Fallback: simple ruby conversion
         return sentence.replace(
             /([\u4e00-\u9faf\u3400-\u4dbf]+)（([^（）]+)）/g,
             (_, kanji, furigana) => `<ruby>${kanji}<rt>${furigana}</rt></ruby>`
@@ -1351,22 +1366,15 @@
             const active = selectedWord === entry.word;
             
             const originalSentence = entry.fullSentence || '';
-            
-            // Clean version (remove all furigana markers)
             const cleanSentence = originalSentence.replace(/[（(][^）)]*[）)]/g, '').trim();
             
-            // When furigana is OFF, show the clean version (no parentheses)
-            // When furigana is ON, show the version with ruby tags
             let displaySentence;
             if (showFurigana) {
-                // ON: Show with ruby tags (furigana above kanji)
                 displaySentence = getSentenceWithFurigana(originalSentence);
             } else {
-                // OFF: Show clean version without any furigana markers
                 displaySentence = cleanSentence;
             }
             
-            // Build sentence display
             let sentenceHtml = '';
             if (originalSentence) {
                 sentenceHtml = `
@@ -1395,7 +1403,6 @@
         }
         wordListEl.innerHTML = html;
 
-        // TTS for buttons
         document.querySelectorAll('.tts-btn-small').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -1407,7 +1414,6 @@
             });
         });
 
-        // Click: highlight
         document.querySelectorAll('#wordList li').forEach(li => {
             li.addEventListener('click', function(e) {
                 if (e.target.closest('.tts-btn-small')) return;
@@ -1417,6 +1423,7 @@
                     selectedWord = word;
                     markingState = null;
                     firstMark = null;
+                    selectedCells = [];
                     markCells = new Set();
                     errorMark = false;
                     renderGrid();
@@ -1426,6 +1433,7 @@
                     selectedWord = word;
                     markingState = null;
                     firstMark = null;
+                    selectedCells = [];
                     markCells = new Set();
                     errorMark = false;
                     renderGrid();
@@ -1434,7 +1442,6 @@
                 }
             });
 
-            // Double-click: mark as found
             li.addEventListener('dblclick', function(e) {
                 const word = this.dataset.word;
                 const placement = wordPlacements.find(p => p.word === word);
@@ -1450,6 +1457,7 @@
                 selectedWord = word;
                 markingState = null;
                 firstMark = null;
+                selectedCells = [];
                 markCells = new Set();
                 errorMark = false;
                 renderGrid();
@@ -1476,7 +1484,7 @@
     }
 
     // ============================================================
-    // GRID MARKING LOGIC
+    // GRID MARKING LOGIC - SUPPORTS BOTH METHODS
     // ============================================================
     function getCellFromEvent(e) {
         const td = e.target.closest('td');
@@ -1488,7 +1496,7 @@
     }
 
     function getPathCells(start, end) {
-        if (!start || !end) return [];
+        if (!start || !end) return null;
 
         const dr = Math.sign(end.row - start.row);
         const dc = Math.sign(end.col - start.col);
@@ -1501,8 +1509,9 @@
         let row = start.row, col = start.col;
         const endRow = end.row, endCol = end.col;
 
-        while (row !== endRow + dr || col !== endCol + dc) {
+        while (true) {
             cells.push({ row, col });
+            if (row === endRow && col === endCol) break;
             row += dr;
             col += dc;
         }
@@ -1525,15 +1534,95 @@
                 return entry;
             }
         }
+
+        for (const placement of wordPlacements) {
+            const { word, row, col, dr, dc } = placement;
+            
+            const expectedCells = [];
+            for (let i = 0; i < word.length; i++) {
+                expectedCells.push({ row: row + i * dr, col: col + i * dc });
+            }
+            
+            let matchForward = true;
+            if (expectedCells.length === cells.length) {
+                for (let i = 0; i < cells.length; i++) {
+                    if (cells[i].row !== expectedCells[i].row || cells[i].col !== expectedCells[i].col) {
+                        matchForward = false;
+                        break;
+                    }
+                }
+                if (matchForward) {
+                    for (const entry of activeWordList) {
+                        if (entry.word === word) return entry;
+                    }
+                    return { word: word, reading: word, meaning: '', sentence: '', fullSentence: '' };
+                }
+            }
+            
+            let matchReverse = true;
+            if (expectedCells.length === cells.length) {
+                for (let i = 0; i < cells.length; i++) {
+                    const j = expectedCells.length - 1 - i;
+                    if (cells[i].row !== expectedCells[j].row || cells[i].col !== expectedCells[j].col) {
+                        matchReverse = false;
+                        break;
+                    }
+                }
+                if (matchReverse) {
+                    for (const entry of activeWordList) {
+                        if (entry.word === word) return entry;
+                    }
+                    return { word: word, reading: word, meaning: '', sentence: '', fullSentence: '' };
+                }
+            }
+        }
+
         return null;
     }
 
+    // Helper: Check if a word is valid and mark it
+    function checkAndMarkWord(cells) {
+        const foundEntry = getWordFromCells(cells);
+        if (foundEntry) {
+            if (foundWords.has(foundEntry.word)) {
+                statusEl.textContent = `"${foundEntry.word}" already found`;
+                markCells = new Set();
+                selectedCells = [];
+                markingState = null;
+                firstMark = null;
+                renderGrid();
+                return true;
+            }
+
+            foundWords.add(foundEntry.word);
+            selectedWord = foundEntry.word;
+            markCells = new Set();
+            selectedCells = [];
+            markingState = null;
+            firstMark = null;
+            errorMark = false;
+            renderAll();
+            statusEl.textContent = `🎉 Found "${foundEntry.word}"!`;
+            speakText(foundEntry.word, 'ja-JP');
+            if (foundWords.size === activeWordList.length) {
+                statusEl.textContent = '🎊 Congratulations! All words found!';
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // ============================================================
+    // CLICK HANDLER - SUPPORTS BOTH METHODS
+    // ============================================================
     if (gridEl) {
         gridEl.addEventListener('click', function(e) {
             const cell = getCellFromEvent(e);
             if (!cell) return;
 
             const cellKey = getCellKey(cell.row, cell.col);
+            
+            // Check if this cell is part of an already found word
             let cellFound = false;
             for (const foundWord of foundWords) {
                 const placement = wordPlacements.find(p => p.word === foundWord);
@@ -1551,18 +1640,94 @@
                 }
             }
             if (cellFound) {
-                statusEl.textContent = 'This letter is already part of a found word';
+                statusEl.textContent = '⚠️ This letter is already part of a found word';
                 return;
             }
 
+            // ============================================================
+            // METHOD 1 & 2: Click first → Click last OR Click adjacent cells
+            // ============================================================
             if (markingState === null || markingState === 'first') {
+                // Start a new selection
                 markingState = 'second';
                 firstMark = cell;
+                selectedCells = [cell];
                 markCells = new Set([getCellKey(cell.row, cell.col)]);
                 errorMark = false;
                 renderGrid();
-                statusEl.textContent = `📍 Start: (${cell.row+1}, ${cell.col+1}) - Click the last letter`;
-            } else if (markingState === 'second') {
+                statusEl.textContent = `📍 Start: (${cell.row+1}, ${cell.col+1}) - Click the last letter (or click adjacent cells to build)`;
+                return;
+            }
+
+            if (markingState === 'second') {
+                // Check if this is adjacent to the previous cell (step-by-step method)
+                const lastCell = selectedCells[selectedCells.length - 1];
+                const dr = Math.abs(cell.row - lastCell.row);
+                const dc = Math.abs(cell.col - lastCell.col);
+                const isAdjacent = (dr === 1 && dc === 0) || (dr === 0 && dc === 1) || (dr === 1 && dc === 1);
+                
+                // Check if this is the same as the first cell (finish the word - step-by-step method)
+                if (selectedCells.length >= 2 && cell.row === selectedCells[0].row && cell.col === selectedCells[0].col) {
+                    const chars = selectedCells.map(p => currentGrid[p.row][p.col]).join('');
+                    statusEl.textContent = `🔍 Checking: "${chars}"...`;
+                    const found = checkAndMarkWord(selectedCells);
+                    if (!found) {
+                        errorMark = true;
+                        for (const p of selectedCells) {
+                            markCells.add(getCellKey(p.row, p.col));
+                        }
+                        renderGrid();
+                        setTimeout(() => {
+                            errorMark = false;
+                            markCells = new Set();
+                            selectedCells = [];
+                            markingState = null;
+                            firstMark = null;
+                            renderGrid();
+                            statusEl.textContent = 'Click first letter, then last letter (or click cells one by one)';
+                        }, 1500);
+                    }
+                    return;
+                }
+                
+                // Check if this cell is adjacent (step-by-step continuation)
+                if (isAdjacent) {
+                    if (markCells.has(cellKey)) {
+                        statusEl.textContent = '⚠️ Cell already selected';
+                        return;
+                    }
+                    
+                    selectedCells.push(cell);
+                    markCells.add(getCellKey(cell.row, cell.col));
+                    renderGrid();
+                    
+                    const chars = selectedCells.map(p => currentGrid[p.row][p.col]).join('');
+                    statusEl.textContent = `🔍 "${chars}" (${selectedCells.length} cells) - Click next adjacent, or click first to finish`;
+                    
+                    // Check if the current selection already forms a complete word
+                    const foundEntry = getWordFromCells(selectedCells);
+                    if (foundEntry && !foundWords.has(foundEntry.word)) {
+                        foundWords.add(foundEntry.word);
+                        selectedWord = foundEntry.word;
+                        markCells = new Set();
+                        selectedCells = [];
+                        markingState = null;
+                        firstMark = null;
+                        errorMark = false;
+                        renderAll();
+                        statusEl.textContent = `🎉 Found "${foundEntry.word}"!`;
+                        speakText(foundEntry.word, 'ja-JP');
+                        if (foundWords.size === activeWordList.length) {
+                            statusEl.textContent = '🎊 Congratulations! All words found!';
+                        }
+                    }
+                    return;
+                }
+                
+                // ============================================================
+                // METHOD 1: TRADITIONAL (Click first → Click last)
+                // ============================================================
+                // Not adjacent, and not the first cell - treat as traditional method
                 const path = getPathCells(firstMark, cell);
                 if (!path) {
                     errorMark = true;
@@ -1574,51 +1739,34 @@
                     setTimeout(() => {
                         errorMark = false;
                         markCells = new Set();
+                        selectedCells = [];
                         markingState = null;
                         firstMark = null;
                         renderGrid();
-                        statusEl.textContent = 'Click the first letter, then click the last letter';
+                        statusEl.textContent = 'Click first letter, then last letter (or click cells one by one)';
                     }, 1500);
                     return;
                 }
 
-                const foundEntry = getWordFromCells(path);
-                if (foundEntry) {
-                    if (foundWords.has(foundEntry.word)) {
-                        statusEl.textContent = `"${foundEntry.word}" already found`;
-                        markCells = new Set();
-                        markingState = null;
-                        firstMark = null;
-                        renderGrid();
-                        return;
-                    }
+                const selectedChars = path.map(p => currentGrid[p.row][p.col]).join('');
+                statusEl.textContent = `🔍 Selected: "${selectedChars}" (${path.length} cells)`;
 
-                    foundWords.add(foundEntry.word);
-                    selectedWord = foundEntry.word;
-                    markCells = new Set();
-                    markingState = null;
-                    firstMark = null;
-                    errorMark = false;
-                    renderAll();
-                    statusEl.textContent = `🎉 Found "${foundEntry.word}"!`;
-                    speakText(foundEntry.word, 'ja-JP');
-                    if (foundWords.size === activeWordList.length) {
-                        statusEl.textContent = '🎊 Congratulations! All words found!';
-                    }
-                } else {
+                const found = checkAndMarkWord(path);
+                if (!found) {
                     errorMark = true;
                     for (const p of path) {
                         markCells.add(getCellKey(p.row, p.col));
                     }
                     renderGrid();
-                    statusEl.textContent = '❌ Not a valid word in the list';
+                    statusEl.textContent = `❌ "${selectedChars}" is not in the word list`;
                     setTimeout(() => {
                         errorMark = false;
                         markCells = new Set();
+                        selectedCells = [];
                         markingState = null;
                         firstMark = null;
                         renderGrid();
-                        statusEl.textContent = 'Click the first letter, then click the last letter';
+                        statusEl.textContent = 'Click first letter, then last letter (or click cells one by one)';
                     }, 1500);
                 }
             }
@@ -1663,7 +1811,7 @@
             stopTts();
             statusEl.textContent = '⏹️ TTS stopped';
             setTimeout(() => {
-                statusEl.textContent = 'Click the first letter, then click the last letter to mark';
+                statusEl.textContent = 'Click first letter, then last letter (or click cells one by one)';
             }, 1500);
         });
     }
@@ -1684,7 +1832,7 @@
     // ============================================================
     if (hasData) {
         generatePuzzle();
-        statusEl.textContent = 'Click the first letter, then click the last letter to mark';
+        statusEl.textContent = 'Click first letter, then last letter (or click cells one by one)';
     } else {
         gridEl.innerHTML = '<tr><td colspan="12" style="padding: 40px; text-align: center; color: #a02020;">⚠️ No data loaded. Check that files exist at:<br>js/data/wordDict.js<br>js/data/sentences.js</td></tr>';
         wordListEl.innerHTML = '<li style="color: #a02020; text-align: center; padding: 20px;">⚠️ No data loaded</li>';
