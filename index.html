@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>N5 Word Search with Furigana</title>
     
     <!-- PWA Meta Tags -->
@@ -10,6 +10,9 @@
     <meta name="theme-color" content="#b8a58b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Allow rotation on all devices -->
+    <meta name="screen-orientation" content="both">
+    <meta name="apple-mobile-web-app-orientations" content="all">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <style>
@@ -36,6 +39,7 @@
             border-radius: 24px;
             padding: 30px 25px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
         }
 
         h1 {
@@ -49,12 +53,14 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 12px;
+            transition: font-size 0.2s ease;
         }
 
         h1 small {
             font-size: 0.9rem;
             font-weight: 400;
             color: #7a6f60;
+            transition: font-size 0.2s ease;
         }
 
         .top-bar {
@@ -149,6 +155,7 @@
             margin-left: auto;
             text-align: center;
             min-width: 200px;
+            transition: font-size 0.2s ease;
         }
 
         .puzzle-wrapper {
@@ -181,6 +188,7 @@
             padding: 8px;
             background: #f8f5f0;
             border-radius: 8px;
+            transition: font-size 0.2s ease;
         }
 
         table.grid {
@@ -518,6 +526,315 @@
             background: #f0d8b0;
         }
 
+        /* ============================================================ */
+        /* ROTATION & LANDSCAPE SUPPORT                                 */
+        /* ============================================================ */
+
+        /* Landscape phones - compact layout */
+        @media (max-width: 700px) and (orientation: landscape) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 16px 14px;
+                border-radius: 16px;
+            }
+
+            h1 {
+                font-size: 1.3rem;
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+            }
+
+            h1 small {
+                font-size: 0.7rem;
+            }
+
+            .top-bar {
+                gap: 6px;
+                margin-bottom: 12px;
+            }
+
+            .btn {
+                padding: 6px 14px;
+                font-size: 0.75rem;
+            }
+
+            .btn-tts {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+
+            .status {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+                min-width: 120px;
+            }
+
+            .puzzle-wrapper {
+                gap: 16px;
+            }
+
+            .grid-section {
+                min-width: 200px;
+                flex: 2 1 300px;
+            }
+
+            .grid-container {
+                padding: 10px 8px;
+            }
+
+            .grid-instructions {
+                font-size: 0.65rem;
+                padding: 4px 8px;
+                margin-bottom: 6px;
+            }
+
+            .grid td {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+
+            .grid td .kanji {
+                font-size: 14px;
+            }
+
+            .grid td .furigana {
+                font-size: 7px;
+            }
+
+            .word-list {
+                flex: 1 1 200px;
+                min-width: 150px;
+                padding: 12px 14px 16px;
+                max-height: 400px;
+            }
+
+            .word-list h3 {
+                font-size: 0.9rem;
+                padding-bottom: 6px;
+                margin-bottom: 8px;
+            }
+
+            .word-list li {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+            }
+
+            .word-list li .word-kanji {
+                font-size: 0.9rem;
+            }
+
+            .word-list li .word-reading {
+                font-size: 0.65rem;
+            }
+
+            .word-list li .word-meaning {
+                font-size: 0.65rem;
+            }
+
+            .word-list li .word-sentence {
+                font-size: 0.7rem;
+                padding: 4px 6px;
+            }
+
+            .word-list li .tts-btn-small {
+                width: 20px;
+                height: 20px;
+                font-size: 9px;
+            }
+
+            .counter {
+                font-size: 0.7rem;
+            }
+
+            .legend {
+                font-size: 0.65rem;
+                gap: 10px;
+                padding-top: 12px;
+                margin-top: 12px;
+            }
+
+            .legend .swatch {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        /* Extra small landscape phones */
+        @media (max-width: 480px) and (orientation: landscape) {
+            body {
+                padding: 6px;
+            }
+
+            .container {
+                padding: 10px 8px;
+                border-radius: 12px;
+            }
+
+            h1 {
+                font-size: 1.1rem;
+                padding-bottom: 6px;
+                margin-bottom: 8px;
+            }
+
+            h1 small {
+                font-size: 0.6rem;
+            }
+
+            .top-bar {
+                gap: 4px;
+                margin-bottom: 8px;
+            }
+
+            .btn {
+                padding: 4px 10px;
+                font-size: 0.65rem;
+                border-radius: 20px;
+            }
+
+            .btn-tts {
+                padding: 3px 8px;
+                font-size: 0.6rem;
+            }
+
+            .status {
+                font-size: 0.6rem;
+                padding: 3px 10px;
+                min-width: 80px;
+            }
+
+            .puzzle-wrapper {
+                gap: 10px;
+            }
+
+            .grid td {
+                width: 26px;
+                height: 26px;
+                font-size: 12px;
+            }
+
+            .grid td .kanji {
+                font-size: 11px;
+            }
+
+            .grid td .furigana {
+                font-size: 5px;
+            }
+
+            .grid-container {
+                padding: 6px 4px;
+            }
+
+            .grid-instructions {
+                font-size: 0.55rem;
+                padding: 3px 6px;
+            }
+
+            .word-list {
+                padding: 8px 10px 12px;
+                max-height: 300px;
+                min-width: 120px;
+            }
+
+            .word-list h3 {
+                font-size: 0.75rem;
+                padding-bottom: 4px;
+                margin-bottom: 6px;
+            }
+
+            .word-list li {
+                padding: 3px 6px;
+                font-size: 0.7rem;
+            }
+
+            .word-list li .word-kanji {
+                font-size: 0.75rem;
+            }
+
+            .word-list li .tts-btn-small {
+                width: 16px;
+                height: 16px;
+                font-size: 7px;
+            }
+
+            .legend {
+                font-size: 0.55rem;
+                gap: 6px;
+                padding-top: 8px;
+                margin-top: 8px;
+            }
+
+            .legend .swatch {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        /* Tablet landscape */
+        @media (min-width: 701px) and (max-width: 1024px) and (orientation: landscape) {
+            body {
+                padding: 16px 24px;
+            }
+
+            .container {
+                padding: 24px 30px;
+            }
+
+            .grid td {
+                width: 42px;
+                height: 42px;
+                font-size: 19px;
+            }
+
+            .grid td .kanji {
+                font-size: 18px;
+            }
+
+            .word-list {
+                max-height: 500px;
+            }
+
+            .word-list li {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Tablet portrait - optimize */
+        @media (min-width: 701px) and (max-width: 1024px) and (orientation: portrait) {
+            .grid td {
+                width: 46px;
+                height: 46px;
+            }
+
+            .grid td .kanji {
+                font-size: 19px;
+            }
+        }
+
+        /* Desktop large screen */
+        @media (min-width: 1200px) {
+            .grid td {
+                width: 52px;
+                height: 52px;
+                font-size: 24px;
+            }
+
+            .grid td .kanji {
+                font-size: 22px;
+            }
+
+            .grid td .furigana {
+                font-size: 10px;
+            }
+        }
+
+        /* ============================================================ */
+        /* PRINT STYLES (unchanged)                                     */
+        /* ============================================================ */
+
         @media print {
             body {
                 background: white;
@@ -708,21 +1025,6 @@
         .print-footer {
             display: none;
         }
-
-        @media (max-width: 700px) {
-            .grid td { width: 38px; height: 38px; }
-            .grid td .kanji { font-size: 16px; }
-            .grid td .furigana { font-size: 7px; }
-            .word-list li { font-size: 0.9rem; }
-            .status { font-size: 0.8rem; min-width: 150px; }
-        }
-
-        @media (max-width: 450px) {
-            .grid td { width: 32px; height: 32px; }
-            .grid td .kanji { font-size: 13px; }
-            .grid td .furigana { font-size: 6px; }
-            .btn { font-size: 0.8rem; padding: 8px 16px; }
-        }
     </style>
 </head>
 <body>
@@ -839,6 +1141,36 @@
       deferredPrompt = null;
     }
   });
+
+  // ============================================================
+  // ROTATION HANDLER
+  // ============================================================
+  function handleOrientationChange() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const body = document.body;
+    
+    // Add orientation class for potential future use
+    if (isLandscape) {
+      body.setAttribute('data-orientation', 'landscape');
+    } else {
+      body.setAttribute('data-orientation', 'portrait');
+    }
+  }
+
+  // Listen for orientation changes
+  window.addEventListener('orientationchange', function() {
+    setTimeout(handleOrientationChange, 300);
+  });
+
+  window.addEventListener('resize', handleOrientationChange);
+
+  // Initial check
+  document.addEventListener('DOMContentLoaded', function() {
+    handleOrientationChange();
+  });
+
+  // Also call after a small delay
+  setTimeout(handleOrientationChange, 500);
 </script>
 
 <script>
