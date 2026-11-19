@@ -215,22 +215,9 @@
 
         .grid td .kanji {
             display: block;
-            font-size: 20px;
-            line-height: 1.2;
+            font-size: 24px;
+            line-height: 1;
             color: #000000;
-        }
-
-        .grid td .furigana {
-            display: block;
-            font-size: 9px;
-            color: #8b0000;
-            line-height: 1.1;
-            font-weight: 300;
-            letter-spacing: 0.3px;
-        }
-
-        .grid td .furigana.hidden {
-            display: none;
         }
 
         .grid td .cell-content {
@@ -252,21 +239,12 @@
             font-weight: 700;
         }
 
-        .grid td.highlight .furigana {
-            color: #8b0000;
-            font-weight: 500;
-        }
-
         .grid td.found-word {
             background: #d4e8d4;
         }
 
         .grid td.found-word .kanji {
             color: #000000;
-        }
-
-        .grid td.found-word .furigana {
-            color: #8b0000;
         }
 
         .grid td.mark-start {
@@ -279,10 +257,6 @@
             font-weight: 700;
         }
 
-        .grid td.mark-start .furigana {
-            color: #8b0000;
-        }
-
         .grid td.mark-path {
             background: #f5e8d0;
         }
@@ -291,20 +265,12 @@
             color: #000000;
         }
 
-        .grid td.mark-path .furigana {
-            color: #8b0000;
-        }
-
         .grid td.error-mark {
             background: #f8d0d0;
         }
 
         .grid td.error-mark .kanji {
             color: #000000;
-        }
-
-        .grid td.error-mark .furigana {
-            color: #8b0000;
         }
 
         .word-list {
@@ -649,11 +615,7 @@
             }
 
             .grid td .kanji {
-                font-size: clamp(10px, calc((100vw - 48px) / 12 * 0.58), 20px);
-            }
-
-            .grid td .furigana {
-                font-size: clamp(6px, calc((100vw - 48px) / 12 * 0.28), 9px);
+                font-size: clamp(13px, calc((100vw - 48px) / 12 * 0.74), 24px);
             }
 
             .word-list {
@@ -734,10 +696,6 @@
 
             .grid td .kanji {
                 font-size: 14px;
-            }
-
-            .grid td .furigana {
-                font-size: 7px;
             }
 
             .word-list {
@@ -855,10 +813,6 @@
                 font-size: 11px;
             }
 
-            .grid td .furigana {
-                font-size: 5px;
-            }
-
             .grid-container {
                 padding: 6px 4px;
             }
@@ -961,9 +915,6 @@
                 font-size: 22px;
             }
 
-            .grid td .furigana {
-                font-size: 10px;
-            }
         }
 
         /* ============================================================ */
@@ -1028,11 +979,6 @@
             .grid td .kanji {
                 color: #000000 !important;
                 font-size: 18px;
-            }
-
-            .grid td .furigana {
-                color: #8b0000 !important;
-                font-size: 8px;
             }
 
             .grid td.highlight,
@@ -1499,124 +1445,12 @@
     // FURIGANA MAPPING
     // ============================================================
 
-    const furiganaMap = new Map();
 
     function getCellKey(row, col) {
         return `${row},${col}`;
     }
 
-    function buildFuriganaMap() {
-        furiganaMap.clear();
-        
-        for (const placement of wordPlacements) {
-            const { word, entry, row, col, dr, dc } = placement;
-            const reading = entry.reading || word;
-            
-            const chars = word.split('');
-            const readingChars = reading.split('');
-            
-            const kanjiPositions = [];
-            for (let i = 0; i < chars.length; i++) {
-                const ch = chars[i];
-                if (ch >= '\u4e00' && ch <= '\u9faf') {
-                    kanjiPositions.push(i);
-                }
-            }
-            
-            if (kanjiPositions.length === 0) continue;
-            
-            let okuriganaLength = 0;
-            let foundKanji = false;
-            for (let i = chars.length - 1; i >= 0; i--) {
-                const ch = chars[i];
-                const isKanji = ch >= '\u4e00' && ch <= '\u9faf';
-                if (!isKanji && !foundKanji) {
-                    okuriganaLength++;
-                } else if (isKanji) {
-                    foundKanji = true;
-                }
-            }
-            
-            let readingIdx = 0;
-            const totalReading = readingChars.length;
-            
-            if (kanjiPositions.length === 1) {
-                const pos = kanjiPositions[0];
-                let kanjiReading = reading;
-                if (okuriganaLength > 0 && reading.length > okuriganaLength) {
-                    kanjiReading = reading.slice(0, reading.length - okuriganaLength);
-                }
-                const cellKey = getCellKey(row + pos * dr, col + pos * dc);
-                furiganaMap.set(cellKey, kanjiReading);
-            } else {
-                for (let k = 0; k < kanjiPositions.length; k++) {
-                    const pos = kanjiPositions[k];
-                    const isLast = (k === kanjiPositions.length - 1);
-                    
-                    let charsForThisKanji;
-                    if (isLast) {
-                        charsForThisKanji = totalReading - readingIdx;
-                    } else {
-                        const remainingKanji = kanjiPositions.length - k;
-                        const remainingReading = totalReading - readingIdx;
-                        charsForThisKanji = Math.floor(remainingReading / remainingKanji);
-                        if (charsForThisKanji < 1) charsForThisKanji = 1;
-                    }
-                    
-                    let furiganaText = '';
-                    for (let j = 0; j < charsForThisKanji && readingIdx < totalReading; j++) {
-                        furiganaText += readingChars[readingIdx++];
-                    }
-                    
-                    const cellKey = getCellKey(row + pos * dr, col + pos * dc);
-                    furiganaMap.set(cellKey, furiganaText);
-                }
-            }
-            
-            for (let i = 0; i < chars.length; i++) {
-                const ch = chars[i];
-                const isKanji = ch >= '\u4e00' && ch <= '\u9faf';
-                if (!isKanji) {
-                    const cellKey = getCellKey(row + i * dr, col + i * dc);
-                    furiganaMap.set(cellKey, '');
-                }
-            }
-        }
-    }
-
-    function getFuriganaForChar(row, col) {
-        const ch = currentGrid[row][col];
-
-        // Kana is already its own reading. Without this guard the fallback below
-        // finds a word containing the character and prints the character above
-        // itself (に over に), because a kana reading is the kana.
-        const isKanji =
-            (ch >= "\u4e00" && ch <= "\u9faf") ||
-            (ch >= "\u3400" && ch <= "\u4dbf");
-        if (!isKanji) {
-            return "";
-        }
-
-        const key = getCellKey(row, col);
-        if (furiganaMap.has(key)) {
-            return furiganaMap.get(key);
-        }
-        for (const entry of activeWordList) {
-            const idx = entry.word.indexOf(ch);
-            if (idx !== -1) {
-                const readingChars = entry.reading.split('');
-                if (readingChars[idx]) {
-                    return readingChars[idx];
-                }
-            }
-        }
-        if (wordDictData[ch]) {
-            return wordDictData[ch].reading || '';
-        }
-        return '';
-    }
-
-    function shuffle(arr) {
+            function shuffle(arr) {
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -1726,7 +1560,6 @@
 
         currentGrid = newGrid;
         wordPlacements = placements;
-        buildFuriganaMap();
         foundWords = new Set();
         selectedWord = null;
         markingState = null;
@@ -1803,12 +1636,8 @@
                     cls = 'error-mark';
                 }
 
-                const furigana = getFuriganaForChar(r, c);
-                const furiganaClass = showFurigana ? '' : 'hidden';
-
                 html += `<td class="${cls}" data-row="${r}" data-col="${c}">
                     <div class="cell-content">
-                        <span class="furigana ${furiganaClass}">${furigana || ''}</span>
                         <span class="kanji">${ch}</span>
                     </div>
                 </td>`;
