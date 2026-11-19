@@ -1585,11 +1585,22 @@
     }
 
     function getFuriganaForChar(row, col) {
+        const ch = currentGrid[row][col];
+
+        // Kana is already its own reading. Without this guard the fallback below
+        // finds a word containing the character and prints the character above
+        // itself (に over に), because a kana reading is the kana.
+        const isKanji =
+            (ch >= "\u4e00" && ch <= "\u9faf") ||
+            (ch >= "\u3400" && ch <= "\u4dbf");
+        if (!isKanji) {
+            return "";
+        }
+
         const key = getCellKey(row, col);
         if (furiganaMap.has(key)) {
             return furiganaMap.get(key);
         }
-        const ch = currentGrid[row][col];
         for (const entry of activeWordList) {
             const idx = entry.word.indexOf(ch);
             if (idx !== -1) {

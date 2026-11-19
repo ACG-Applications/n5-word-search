@@ -1,5 +1,5 @@
 // Service Worker for N5 Word Search PWA
-const CACHE_NAME = 'n5-word-search-v3';
+const CACHE_NAME = 'n5-word-search-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
