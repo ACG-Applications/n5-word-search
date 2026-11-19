@@ -1701,12 +1701,21 @@
             }
             
             const readingClass = showFurigana ? '' : 'hidden';
-            
+
+            // Kana is already its own reading, so a reading is only useful for words
+            // that contain kanji (ビール -> ビール is noise, 東京 -> とうきょう is not).
+            const wordHasKanji =
+                /[\u4e00-\u9faf\u3400-\u4dbf]/.test(entry.word);
+            const readingHtml =
+                wordHasKanji && entry.reading && entry.reading !== entry.word
+                    ? `<span class="word-reading ${readingClass}">${entry.reading}</span>`
+                    : '';
+
             html += `<li class="${found ? 'found' : ''} ${active ? 'active' : ''}" 
                          data-word="${entry.word}">
                 <div class="word-main">
                     <span class="word-kanji">${entry.word}</span>
-                    <span class="word-reading ${readingClass}">${entry.reading}</span>
+                    ${readingHtml}
                     <span class="word-meaning">${entry.meaning}</span>
                     <button class="tts-btn-small tts-btn-word" data-tts="${entry.word}" data-lang="ja-JP" title="🔊 Listen to word">🔊</button>
                 </div>
