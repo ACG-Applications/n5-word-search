@@ -531,6 +531,141 @@
         /* ============================================================ */
 
         /* Landscape phones - compact layout */
+        /* ============================================================
+           BRAND MARK (top right)
+           ============================================================ */
+        .container {
+            position: relative;
+        }
+
+        .antonio-signature {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #d4c9b8;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            background: #fff7ec;
+            z-index: 5;
+        }
+
+        h1 {
+            padding-right: 62px;
+        }
+
+        /* ============================================================
+           PHONE PORTRAIT
+           The only small-screen rules were landscape-only, so in portrait the
+           12x48px grid (576px wide) and .grid-section's 340px min-width pushed the
+           puzzle off the right edge of a 360px phone. Cells now size to the viewport.
+           ============================================================ */
+        @media (max-width: 700px) and (orientation: portrait) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 14px 10px 18px;
+                border-radius: 16px;
+            }
+
+            .antonio-signature {
+                top: 10px;
+                right: 12px;
+                width: 34px;
+                height: 34px;
+            }
+
+            h1 {
+                font-size: 1.1rem;
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+                gap: 6px;
+                padding-right: 44px;
+            }
+
+            h1 small {
+                font-size: 0.65rem;
+            }
+
+            .top-bar {
+                gap: 6px;
+                margin-bottom: 10px;
+            }
+
+            .btn {
+                padding: 7px 12px;
+                font-size: 0.75rem;
+            }
+
+            .btn-tts {
+                padding: 5px 10px;
+                font-size: 0.7rem;
+            }
+
+            .status {
+                font-size: 0.7rem;
+                padding: 5px 10px;
+                min-width: 0;
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .puzzle-wrapper {
+                gap: 14px;
+            }
+
+            .grid-section {
+                flex: 1 1 100%;
+                min-width: 0;
+                width: 100%;
+                overflow-x: visible;
+            }
+
+            .grid-container {
+                padding: 8px 6px;
+                border-radius: 14px;
+            }
+
+            .grid-instructions {
+                font-size: 0.62rem;
+                padding: 5px 6px;
+                margin-bottom: 6px;
+            }
+
+            .grid {
+                width: 100%;
+                table-layout: fixed;
+                border-collapse: collapse;
+            }
+
+            .grid td {
+                width: calc((100vw - 48px) / 12);
+                height: calc((100vw - 48px) / 12);
+                font-size: clamp(11px, calc((100vw - 48px) / 12 * 0.62), 22px);
+            }
+
+            .grid td .kanji {
+                font-size: clamp(10px, calc((100vw - 48px) / 12 * 0.58), 20px);
+            }
+
+            .grid td .furigana {
+                font-size: clamp(6px, calc((100vw - 48px) / 12 * 0.28), 9px);
+            }
+
+            .word-list {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .word-list ul {
+                max-height: none;
+            }
+        }
+
         @media (max-width: 700px) and (orientation: landscape) {
             body {
                 padding: 10px;
@@ -1029,6 +1164,11 @@
 </head>
 <body>
 <div class="container" id="app">
+    <img
+      src="icons/Antonio.png"
+      alt="ACG Applications"
+      class="antonio-signature"
+    />
     <h1>
         <span>🔍 N5 Word Search</span>
         <small>with Furigana · All Directions</small>

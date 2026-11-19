@@ -1,5 +1,5 @@
 // Service Worker for N5 Word Search PWA
-const CACHE_NAME = 'n5-word-search-v2'; // Changed version to force update
+const CACHE_NAME = 'n5-word-search-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   './js/data/wordDict.js',
   './js/data/sentences.js',
   './js/utils/furigana.js',
+  './icons/Antonio.png',
   './icons/favicon-16x16.png',
   './icons/favicon-32x32.png',
   './icons/icon-192x192.png',
