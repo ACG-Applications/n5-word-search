@@ -314,7 +314,7 @@
             flex-direction: column;
             gap: 4px;
             font-family: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
-            border: 1px solid transparent;
+            border: 1px solid #ece5da;
             background: #ffffff;
         }
 
@@ -331,7 +331,7 @@
         }
 
         .word-list li .word-kanji {
-            font-weight: 500;
+            font-weight: 600;
             font-size: 1.05rem;
             color: #000000;
         }
@@ -339,7 +339,7 @@
         .word-list li .word-reading {
             font-size: 0.75rem;
             color: #8b0000;
-            font-weight: 300;
+            font-weight: 500;
         }
 
         .word-list li .word-reading.hidden {
@@ -429,17 +429,34 @@
             background: #3a5a7a;
         }
 
+        /* Found: a light green pill keeps the word readable for review. The tick is the
+           non-colour cue, so the state survives colour-blindness and printing. */
         .word-list li.found {
-            opacity: 0.6;
-            text-decoration: line-through 2px #8a7e6e;
+            background: #e3f3e6;
+            border-color: #b7dcc0;
+        }
+
+        .word-list li.found:hover {
+            background: #d7ebdb;
         }
 
         .word-list li.found .word-kanji {
-            color: #5a7a5a;
+            color: #1f1a16;
         }
 
         .word-list li.found .word-reading {
-            color: #5a7a5a;
+            color: #8b0000;
+        }
+
+        .word-list li.found .word-meaning {
+            color: #5a5148;
+        }
+
+        .word-list li.found .word-kanji::before {
+            content: "✓";
+            color: #2f6b4f;
+            font-weight: 700;
+            margin-right: 6px;
         }
 
         .word-list li.active {
@@ -1059,13 +1076,18 @@
                 font-size: 0.75rem;
             }
 
+            /* Green fills do not print, so the tick carries the found state on paper. */
             .word-list li.found {
-                opacity: 0.7;
-                text-decoration: line-through 2px #666;
+                opacity: 1;
+                text-decoration: none;
             }
 
             .word-list li.found .word-kanji {
-                color: #4a7a4a !important;
+                color: #1f1a16 !important;
+            }
+
+            .word-list li.found .word-reading {
+                color: #8b0000 !important;
             }
 
             .word-list li.active {
