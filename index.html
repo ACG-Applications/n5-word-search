@@ -1106,7 +1106,72 @@
         .print-footer {
             display: none;
         }
-    </style>
+    
+  /* ── All-words-found splash ─────────────────────────────── */
+  .win-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(45, 39, 32, 0.45);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+
+  .win-overlay.show { display: flex; }
+
+  .win-card {
+    background: #fffdf9;
+    color: #2d2720;
+    border: 1px solid #ccc2b2;
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(45, 39, 32, 0.28);
+    padding: 26px 30px 22px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    animation: winPop 0.22s ease-out;
+  }
+
+  @keyframes winPop {
+    from { transform: translateY(10px) scale(0.97); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+  }
+
+  .win-emoji { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; }
+  .win-card h2 { margin: 0 0 6px; font-size: 1.25rem; letter-spacing: 0.01em; }
+  .win-card p { margin: 0 0 18px; font-size: 0.92rem; color: #6b6157; }
+  .win-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .win-btn {
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 40px;
+    border: 1px solid #ccc2b2;
+    background: #f0ebe3;
+    color: #2d2720;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+
+  .win-btn:hover { background: #e6dfd4; }
+  .win-btn.primary { background: #2f6b4f; border-color: #2f6b4f; color: #fff; }
+  .win-btn.primary:hover { background: #27583f; }
+  .win-btn:focus-visible { outline: 3px solid #a02020; outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .win-card { animation: none; }
+  }
+
+  @media print {
+    .win-overlay { display: none !important; }
+  }
+</style>
 </head>
 <body>
 <div class="container" id="app">
@@ -1258,6 +1323,18 @@
   // Also call after a small delay
   setTimeout(handleOrientationChange, 500);
 </script>
+
+<!-- All-words-found splash -->
+<div id="winOverlay" class="win-overlay" aria-hidden="true">
+  <div class="win-card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="win-emoji" aria-hidden="true">🎊</div>
+    <h2 id="winTitle">All words found!</h2>
+    <p id="winSub">Every word in this puzzle is done.</p>
+    <div class="win-actions">
+      <button type="button" id="winNextBtn" class="win-btn primary">Next puzzle →</button>
+      <button type="button" id="winCloseBtn" class="win-btn">Stay here</button>
+    </div>
+  </div>
 
 <script>
     // ============================================================
@@ -1787,10 +1864,37 @@
                 statusEl.textContent = `🎉 Found "${word}"!`;
                 speakText(word, 'ja-JP');
                 if (foundWords.size === activeWordList.length) {
-                    statusEl.textContent = '🎊 Congratulations! All words found!';
+                    onPuzzleComplete();
                 }
             });
         });
+    }
+
+    // ── All-words-found splash ──────────────────────────────
+    function showWinSplash() {
+        const overlay = document.getElementById('winOverlay');
+        if (!overlay || overlay.classList.contains('show')) return;
+        const sub = document.getElementById('winSub');
+        if (sub) {
+            sub.textContent = 'Every one of the ' + activeWordList.length + ' words is done.';
+        }
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+        const next = document.getElementById('winNextBtn');
+        if (next) next.focus();
+    }
+
+    function hideWinSplash() {
+        const overlay = document.getElementById('winOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function onPuzzleComplete() {
+        statusEl.textContent = '🎊 Congratulations! All words found!';
+        // Let the last word finish highlighting before covering the grid.
+        setTimeout(showWinSplash, 650);
     }
 
     function updateCounter() {
@@ -1926,7 +2030,7 @@
             statusEl.textContent = `🎉 Found "${foundEntry.word}"!`;
             speakText(foundEntry.word, 'ja-JP');
             if (foundWords.size === activeWordList.length) {
-                statusEl.textContent = '🎊 Congratulations! All words found!';
+                onPuzzleComplete();
             }
             return true;
         }
@@ -2039,7 +2143,7 @@
                         statusEl.textContent = `🎉 Found "${foundEntry.word}"!`;
                         speakText(foundEntry.word, 'ja-JP');
                         if (foundWords.size === activeWordList.length) {
-                            statusEl.textContent = '🎊 Congratulations! All words found!';
+                            onPuzzleComplete();
                         }
                     }
                     return;
@@ -2144,6 +2248,21 @@
         generatePuzzle();
     });
 
+    document.getElementById('winNextBtn').addEventListener('click', function() {
+        hideWinSplash();
+        generatePuzzle();
+    });
+
+    document.getElementById('winCloseBtn').addEventListener('click', hideWinSplash);
+
+    document.getElementById('winOverlay').addEventListener('click', function(e) {
+        if (e.target === this) hideWinSplash();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideWinSplash();
+    });
+
     document.getElementById('printBtn').addEventListener('click', function() {
         window.print();
     });
@@ -2166,5 +2285,8 @@
         });
     }
 </script>
+
+
+</div>
 </body>
 </html>
